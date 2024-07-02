@@ -21,12 +21,8 @@ module.exports.signinUser=async({email,password})=>{
     if (!user) throw new Unauthorized("Invalid email or password");
     const isPasswordValid = await bcryptjs.compare(password, user.password);
     if (!isPasswordValid) throw new Unauthorized("Invalid email or password");
-    // const token = jwt.sign({ id: user._id }, configs.JWT_SECRET || "", {
-    //   expiresIn: "1h",
-    // });
     const payload = {
       id: user._id,
-      role: user.role,
     };
     const token = generateToken(payload, "10d");
     const { password: psd, ...userWithoutPassword } = user.toObject();
