@@ -1,5 +1,5 @@
 const {signupUser,signinUser} =require("../business-logic/users.business-logic");
-const { Conflict ,NotFound} = require("http-errors");
+const { Conflict ,NotFound,Unauthorized} = require("http-errors");
 const userSignup=async(req,res,next)=>{
     try {
         const{name,email,password,phoneNumber,countryCode,role}=req?.body;
@@ -33,7 +33,13 @@ const userSignin=async(req,res,next)=>{
             data:user
         })
     } catch (error) {
-        next(error)
+        if (error instanceof Unauthorized) {
+            res.status(401).json({ success: false, message: "Invalid email or password" });
+        } else if (error instanceof NotFound) {
+            res.status(404).json({ success: false, message: error.message });
+        } else {
+            next(error); // Pass other errors to the error handling middleware
+        }
     }
 }
 
