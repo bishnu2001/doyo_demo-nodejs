@@ -1,4 +1,4 @@
-const {signupUser,signinUser} =require("../business-logic/users.business-logic");
+const {signupUser,signinUser,getAlluser} =require("../business-logic/users.business-logic");
 const { Conflict ,NotFound,Unauthorized} = require("http-errors");
 const userSignup=async(req,res,next)=>{
     try {
@@ -42,8 +42,23 @@ const userSignin=async(req,res,next)=>{
         }
     }
 }
+const getAllusers=async(req,res,next)=>{
+    try {
+        const currentuserId=req.userId;
+        const {search,perPage,pageNo} = req?.query;
+        const users=await getAlluser({search,perPage,pageNo,currentuserId})
+        res.json({
+            success:true,
+            message:"all user fetch seccessfull",
+            data:users
+        })
+    } catch (error) {
+        next(error)
+    }
+}
 
 module.exports.Usercontroller={
     userSignup,
-    userSignin
+    userSignin,
+    getAllusers
 }

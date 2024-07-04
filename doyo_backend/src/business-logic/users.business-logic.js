@@ -1,7 +1,8 @@
 const Users=require("../model/users.model");
 const bcryptjs=require('bcryptjs');
 const {Conflict,Unauthorized}=require("http-errors");
-const {generateToken }=require('../middleware/generateToken.middleware')
+const {generateToken }=require('../middleware/generateToken.middleware');
+const {aggregationData}=require('../helper/pagination.helper')
 module.exports.signupUser=async({name,email,password,phoneNumber,countryCode,role})=>{
     try {
         const user=await Users.findOne({email});
@@ -27,6 +28,59 @@ module.exports.signinUser=async({email,password})=>{
     const token = generateToken(payload, "10d");
     const { password: psd, ...userWithoutPassword } = user.toObject();
     return { user: userWithoutPassword, token };
+    } catch (error) {
+        throw error
+    }
+}
+module.exports.getAlluser=async({search,perPage,pageNo,currentuserId})=>{
+    try {
+        let args=[];
+        args.push({
+            $sort:{
+                createdAt:-1
+            }
+        });
+        if(search){
+           args.push({
+            ["$addFields"]:{
+                ["searchNameMatch"]:{
+                    ["$regexMatch"]:{
+                        ["input"]:"$name",
+                        ["regex"]:search,
+                        ["options"]:"i"
+                    }
+                }
+            }
+           },
+           {
+            ["$match"]: {
+              ["$expr"]: {
+                ["$or"]: [
+                  {
+                    $eq: ["$searchNameMatch", true],
+                  },
+                ],
+              },
+            },
+          }
+        )
+        }
+        args.push({
+            $match: {
+              _id: {
+                $ne:currentuserId  // Assuming currentUser is an object with _id property
+              }
+            }
+          });
+
+    const allusers=await aggregationData({
+        model: Users,
+        per_page: Number(perPage),
+        pageNo: Number(pageNo),
+        args: args,
+        isTotalData: true,
+    })
+    return allusers
     } catch (error) {
         throw error
     }
